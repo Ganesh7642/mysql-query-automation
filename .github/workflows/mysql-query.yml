@@ -51,18 +51,16 @@ jobs:
           echo "AWS_REGION is set to: $AWS_REGION"
           aws sts get-caller-identity  # Verify IAM credentials are correct
 
-      - name: Fetch AWS Secrets
-        run: |
-          echo "Fetching secrets from AWS Secrets Manager..."
-          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id mysql_password_setup --query SecretString --output text --region "${AWS_REGION}")
-          echo "DB_USER=$(echo $SECRET_JSON | jq -r '.username')" >> $GITHUB_ENV
-          echo "DB_PASS=$(echo $SECRET_JSON | jq -r '.password')" >> $GITHUB_ENV
-
       - name: Run MySQL Query via AWS SSM
         run: |
           echo "Executing MySQL query on EC2 instance..."
           aws ssm send-command \
-          --instance-ids i-0c27818662c8919c3 \
-          --document-name "AWS-RunShellScript" \
-          --parameters 'commands=["mysql -u $DB_USER -p$DB_PASS -h localhost -P 3307 -D employees -e \"SELECT * FROM employees LIMIT 5;\""]' \
-          --timeout-seconds 3600
+            --instance-ids i-0c27818662c8919c3 \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=[
+              "SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id mysql_password_setup --query SecretString --output text --region $AWS_REGION)",
+              "DB_USER=$(echo $SECRET_JSON | jq -r .username)",
+              "DB_PASS=$(echo $SECRET_JSON | jq -r .password)",
+              "mysql -u $DB_USER -p$DB_PASS -h localhost -P 3307 -D employees -e \"SELECT * FROM employees LIMIT 5;\""
+            ]' \
+            --timeout-seconds 3600
