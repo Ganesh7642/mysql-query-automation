@@ -1,4 +1,4 @@
-name: MySQL Query Automation
+name: Run MySQL Queries via AWS SSM
 
 on:
   push:
@@ -6,41 +6,27 @@ on:
       - main
 
 jobs:
-  mysql-query:
+  run-mysql-query:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Install MySQL Client
-        run: sudo apt-get update && sudo apt-get install -y mysql-client
-
-      - name: Test MySQL Connectivity
+      - name: Install AWS CLI
         run: |
-          ping -c 4 3.86.153.167 || echo "Failed to reach MySQL server"
-          nc -zv 3.86.153.167 3307 || echo "Port 3307 is not open"
+          sudo apt-get update
+          sudo apt-get install -y awscli
 
-      - name: Retrieve MySQL Credentials
+      - name: Fetch AWS Secrets
         run: |
           SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id mysql_password_setup --query SecretString --output text)
           echo "DB_USER=$(echo $SECRET_JSON | jq -r '.username')" >> $GITHUB_ENV
           echo "DB_PASS=$(echo $SECRET_JSON | jq -r '.password')" >> $GITHUB_ENV
 
-      - name: Run MySQL Queries
-        env:
-          DB_HOST: "3.86.153.167"
-          DB_PORT: "3307"
+      - name: Run MySQL Query via AWS SSM
         run: |
-          mysql --host=$DB_HOST --port=$DB_PORT --user=$DB_USER --password="$DB_PASS" --database=employees -e "
-          SELECT MIN(YEAR(hire_date)) AS first_hire_year, MAX(YEAR(hire_date)) AS latest_hire_year FROM employees;
-          SELECT * FROM employees WHERE gender = 'M' ORDER BY birth_date ASC;
-          SELECT * FROM employees ORDER BY birth_date ASC;
-          SELECT * FROM employees WHERE gender = 'M';
-          SELECT * FROM employees WHERE gender = 'F';
-          CREATE USER 'admin'@'%' IDENTIFIED BY 'Admin@123';
-          GRANT ALL PRIVILEGES ON *.* TO 'admin'@'%' WITH GRANT OPTION;
-          FLUSH PRIVILEGES;
-          SELECT * FROM dept_emp ORDER BY birth_date ASC;
-          SELECT MIN(YEAR(from_date)) AS first_from_date, MAX(YEAR(from_date)) AS latest_to_date FROM dept_emp;
-          "
+          aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "[{\"Key\":\"InstanceIds\",\"Values\":[\"i-0c27818662c8919c3\"]}]" \
+            --parameters "commands=[\"mysql -u $DB_USER -p'$DB_PASS' -h localhost -P 3307 -D employees -e 'SELECT * FROM employees LIMIT 5;'\" ]" \
+            --region us-east-1
