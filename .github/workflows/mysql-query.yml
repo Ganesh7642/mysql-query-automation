@@ -34,17 +34,25 @@ jobs:
           aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
           aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
           aws configure set region "$AWS_REGION"
-
+          
+      - name: Verify AWS Configuration
+        run: |
+          echo "AWS_REGION is set to: $AWS_REGION"
+          if [[ -z "$AWS_REGION" ]]; then
+            echo "ERROR: AWS_REGION is not set!"
+            exit 1
+          fi
+          
       - name: Fetch AWS Secrets
         run: |
-          echo "Using AWS_REGION=$AWS_REGION"
+          echo "Fetching secrets from AWS Secrets Manager..."
           SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id mysql_password_setup --query SecretString --output text --region "$AWS_REGION")
           echo "DB_USER=$(echo $SECRET_JSON | jq -r '.username')" >> $GITHUB_ENV
           echo "DB_PASS=$(echo $SECRET_JSON | jq -r '.password')" >> $GITHUB_ENV
 
       - name: Run MySQL Query via AWS SSM
         run: |
-          echo "Using AWS_REGION=$AWS_REGION"
+          echo "Executing MySQL query on EC2 instance..."
           aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "[{\"Key\":\"InstanceIds\",\"Values\":[\"i-0c27818662c8919c3\"]}]" \
