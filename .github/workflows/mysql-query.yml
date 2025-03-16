@@ -36,17 +36,15 @@ jobs:
           aws configure set region "$AWS_REGION"
 
       - name: Fetch AWS Secrets
-        env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
+          echo "Using AWS_REGION=$AWS_REGION"
           SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id mysql_password_setup --query SecretString --output text --region "$AWS_REGION")
           echo "DB_USER=$(echo $SECRET_JSON | jq -r '.username')" >> $GITHUB_ENV
           echo "DB_PASS=$(echo $SECRET_JSON | jq -r '.password')" >> $GITHUB_ENV
 
       - name: Run MySQL Query via AWS SSM
-        env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
+          echo "Using AWS_REGION=$AWS_REGION"
           aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "[{\"Key\":\"InstanceIds\",\"Values\":[\"i-0c27818662c8919c3\"]}]" \
