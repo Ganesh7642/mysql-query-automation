@@ -22,6 +22,11 @@ jobs:
           aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
           aws configure set region $AWS_REGION
 
+      - name: Install AWS CLI & JQ
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli jq
+
       - name: Fetch AWS Secrets
         run: |
           SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id mysql_password_setup --query SecretString --output text)
