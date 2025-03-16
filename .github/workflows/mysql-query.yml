@@ -56,8 +56,8 @@ jobs:
           DB_USER=$(echo $SECRET_JSON | jq -r .username)
           DB_PASS=$(echo $SECRET_JSON | jq -r .password)
 
-          # Run the script located on the EC2 instance
-          aws ssm send-command \
+          # Run the script located on the EC2 instance and capture the command ID
+          COMMAND_ID=$(aws ssm send-command \
             --instance-ids i-0c27818662c8919c3 \
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
@@ -66,6 +66,21 @@ jobs:
               "DB_PASS=$(echo $SECRET_JSON | jq -r .password)",
               "/mysql/mysql-query-automation/query.sh $DB_USER $DB_PASS"
             ]' \
-            --timeout-seconds 3600
+            --timeout-seconds 3600 \
+            --query 'Command.CommandId' --output text)
 
-          echo "Shell script executed successfully."
+          echo "SSM Command ID: $COMMAND_ID"
+
+      - name: Wait for SSM command to complete and fetch output
+        run: |
+          # Wait for the SSM command to complete (can be a bit more dynamic based on actual needs)
+          echo "Waiting for SSM command to complete..."
+          sleep 30  # Adjust the wait time based on your script execution time
+
+          # Fetch the output of the command using the stored CommandId
+          OUTPUT=$(aws ssm list-command-invocations \
+            --command-id $COMMAND_ID \
+            --query "CommandInvocations[0].CommandPlugins[0].Output" \
+            --output text)
+          
+          echo "SSM Command Output: $OUTPUT"
