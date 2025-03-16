@@ -25,7 +25,7 @@ QUERY="
 SELECT * FROM dept_emp limit 10;
 SELECT * FROM dept_emp_latest_date limit 15;
 SELECT * FROM dept_manager limit 15;
-SELECT * FROM employees limit 10;
+SELECT * FROM employees limit 15;
 SELECT * FROM salaries limit 10;
 SELECT * FROM titles limit 10;
 "
