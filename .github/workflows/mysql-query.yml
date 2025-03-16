@@ -51,9 +51,12 @@ jobs:
           echo "AWS_REGION is set to: $AWS_REGION"
           aws sts get-caller-identity  # Verify IAM credentials are correct
 
-      - name: Run MySQL Query via AWS SSM
-        run: |
-          echo "Executing MySQL query on EC2 instance..."
+          # Get MySQL credentials from AWS Secrets Manager
+          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id mysql_password_setup --query SecretString --output text --region $AWS_REGION)
+          DB_USER=$(echo $SECRET_JSON | jq -r .username)
+          DB_PASS=$(echo $SECRET_JSON | jq -r .password)
+
+          # Run the script located on the EC2 instance
           aws ssm send-command \
             --instance-ids i-0c27818662c8919c3 \
             --document-name "AWS-RunShellScript" \
@@ -61,6 +64,8 @@ jobs:
               "SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id mysql_password_setup --query SecretString --output text --region $AWS_REGION)",
               "DB_USER=$(echo $SECRET_JSON | jq -r .username)",
               "DB_PASS=$(echo $SECRET_JSON | jq -r .password)",
-              "mysql -u"$DB_USER" -p"$DB_PASS" -h localhost -P 3307 -D employees -e \"SELECT * FROM employees LIMIT 5;\""
+              "/mysql/mysql-query-automation/myscript.sh $DB_USER $DB_PASS"
             ]' \
             --timeout-seconds 3600
+
+          echo "Shell script executed successfully."
