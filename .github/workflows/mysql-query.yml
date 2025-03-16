@@ -13,6 +13,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Install AWS CLI & JQ
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli jq
+          
       - name: Configure AWS Credentials
         run: |
           echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
@@ -21,11 +26,6 @@ jobs:
           aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
           aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
           aws configure set region $AWS_REGION
-
-      - name: Install AWS CLI & JQ
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y awscli jq
 
       - name: Fetch AWS Secrets
         run: |
