@@ -13,6 +13,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Debug GitHub Secrets
+        run: |
+          echo "Checking AWS Secrets..."
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}"
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}"
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          
       - name: Verify AWS CLI Installation
         run: |
           if ! command -v aws &> /dev/null; then
