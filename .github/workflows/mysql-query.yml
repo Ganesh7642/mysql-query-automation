@@ -58,7 +58,7 @@ jobs:
 
           # Run the script located on the EC2 instance and capture the command ID
           COMMAND_ID=$(aws ssm send-command \
-            --instance-ids i-0c27818662c8919c3 \
+            --instance-ids i-01b4f57cb5404c6e5 \
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
               "SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id sqlpasswd --query SecretString --output text --region us-east-1)",
