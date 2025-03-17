@@ -10,7 +10,7 @@ fi
 DB_HOST="localhost"  # If running MySQL on the same EC2 instance, use "localhost" or private IP
 DB_PORT=3307
 DB_NAME="employees"
-SECRET_ID="mysql_password_setup"
+SECRET_ID="sqlpasswd"
 
 # Retrieve credentials from AWS Secrets Manager
 echo "Fetching database credentials from AWS Secrets Manager..."
