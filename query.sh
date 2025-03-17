@@ -23,7 +23,7 @@ DB_PASS=$(echo "$SECRET_JSON" | jq -r '.password')
 # MySQL query
 QUERY="
 SELECT * FROM dept_emp limit 5;
-SELECT * FROM dept_emp_latest_date limit 5;
+SELECT * FROM dept_emp_latest_date limit 10;
 SELECT * FROM dept_manager limit 5;
 SELECT * FROM employees limit 5;
 SELECT * FROM salaries limit 8;
