@@ -46,7 +46,7 @@ jobs:
           aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}"
           aws configure set region "${AWS_REGION}"
           
-      - name: Verify AWS Configuration
+      - name: Executing SSM commands
         run: |
           echo "AWS_REGION is set to: $AWS_REGION"
           aws sts get-caller-identity  # Verify IAM credentials are correct
