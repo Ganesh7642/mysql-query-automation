@@ -73,14 +73,44 @@ jobs:
 
       - name: Wait for SSM command to complete and fetch output
         run: |
+          # Check if the COMMAND_ID is empty
+          if [ -z "$COMMAND_ID" ]; then
+            echo "ERROR: COMMAND_ID is empty. Exiting."
+            exit 1
+          fi
+
           # Wait for the SSM command to complete (can be a bit more dynamic based on actual needs)
           echo "Waiting for SSM command to complete..."
-          sleep 30  # Adjust the wait time based on your script execution time
+          STATUS="Pending"
+          RETRIES=0
+          MAX_RETRIES=10  # Maximum retries to check if command is complete
+          while [ "$STATUS" != "Success" ] && [ "$RETRIES" -lt "$MAX_RETRIES" ]; do
+            # Fetch the status of the command execution
+            STATUS=$(aws ssm list-command-invocations \
+              --command-id $COMMAND_ID \
+              --query "CommandInvocations[0].Status" \
+              --output text)
 
-          # Fetch the output of the command using the stored CommandId
-          OUTPUT=$(aws ssm list-command-invocations \
-            --command-id $COMMAND_ID \
-            --query "CommandInvocations[0].CommandPlugins[0].Output" \
-            --output text)
-          
-          echo "SSM Command Output: $OUTPUT"
+            echo "Current SSM command status: $STATUS"
+            if [ "$STATUS" == "Failed" ]; then
+              echo "SSM command failed."
+              exit 1
+            fi
+
+            # Wait before checking again
+            sleep 10
+            RETRIES=$((RETRIES + 1))
+          done
+
+          if [ "$STATUS" == "Success" ]; then
+            # Fetch the output of the command using the stored CommandId
+            OUTPUT=$(aws ssm list-command-invocations \
+              --command-id $COMMAND_ID \
+              --query "CommandInvocations[0].CommandPlugins[0].Output" \
+              --output text)
+
+            echo "SSM Command Output: $OUTPUT"
+          else
+            echo "SSM command did not complete successfully after $MAX_RETRIES retries."
+            exit 1
+          fi
