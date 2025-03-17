@@ -64,7 +64,7 @@ jobs:
               "SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id sqlpasswd --query SecretString --output text --region us-east-1)",
               "DB_USER=$(echo $SECRET_JSON | jq -r .username)",
               "DB_PASS=$(echo $SECRET_JSON | jq -r .password)",
-              "/mysql/mysql-query-automation/query.sh $DB_USER $DB_PASS"
+              "/root/mysql_automation/mysql-query-automation/query.sh $DB_USER $DB_PASS"
             ]' \
             --timeout-seconds 3600 \
             --query 'Command.CommandId' --output text)
